@@ -1,18 +1,78 @@
-from datetime import datetime, timedelta, timezone
-from jose import jwt
-from passlib.context import CryptContext
-from ..config import SECRET_KEY, ALGORITHM, TOKEN_EXPIRE_MINUTES
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
 
-pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+from sqlalchemy.orm import Session
 
-def hash_password(password: str):
-    return pwd_context.hash(password)
+from app.database import get_db
+from app.models import User
 
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+from app.security import (
+    hash_password,
+    verify_password,
+    create_access_token
+)
 
-def create_access_token(data: dict):
-    to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire, "type": "access"})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM) # type: ignore
+router = APIRouter(
+    prefix="/auth",
+    tags=["Authentication"]
+)
+
+# ======================= REGISTER ========================
+
+@router.post("/register")
+def register(name: str, email: str, password: str, db: Session = Depends(get_db)):
+    existing_user = db.query(User).filter(User.email == email).first()
+
+    if existing_user:
+        raise HTTPException(
+            status_code=400,
+            detail="Email already registered"
+        )
+
+    hashed_password = hash_password(password)
+
+    user = User(
+        name=name,
+        email=email,
+        hashed_password=hashed_password
+    )
+
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    return {
+        "message": "User registered successfully"
+    }
+
+# ======================= LOGIN ===========================
+
+@router.post("/login")
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == form_data.username).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid email or password"
+        )
+
+    if not verify_password(
+        form_data.password,
+        user.hashed_password
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid email or password"
+        )
+
+    access_token = create_access_token(
+        data={
+            "sub": str(user.id)
+        }
+    )
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer"
+    }

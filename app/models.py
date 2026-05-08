@@ -28,7 +28,7 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String)
     email = Column(String, unique=True, index=True)
-    password = Column(String)
+    hashed_password = Column(String, nullable=False)
 
     memberships = relationship("Membership", back_populates="user")
     tasks = relationship("Task", back_populates="assigned_user")
