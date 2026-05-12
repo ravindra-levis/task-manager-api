@@ -7,12 +7,12 @@ from .config import SECRET_KEY, ALGORITHM
 from .database import get_db
 from .models import User
 
-oauth2_schema = OAuth2PasswordBearer(tokenUrl="/login")
+oauth2_schema = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 def get_current_user(token: str = Depends(oauth2_schema), db: Session = Depends(get_db)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM]) # type: ignore
-        user_id = payload.get("user_id")
+        user_id = payload.get("sub")
 
         if not user_id:
             raise HTTPException(status_code=401, detail="Invalid token payload")
