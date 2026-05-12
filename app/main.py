@@ -72,7 +72,7 @@ def get_organization(
     return organization
 
 
-# =================== PROJECT ======================
+# ==================== PROJECT =====================
 
 @app.post("/projects")
 def create_project(
@@ -127,7 +127,7 @@ def get_project(
     return project
 
 
-# ======================= TASK =====================
+# ====================== TASK ======================
 
 @app.post("/tasks")
 def create_task(
@@ -200,3 +200,26 @@ def get_tasks(
     ).offset(skip).limit(limit).all()  
 
     return tasks
+
+@app.patch("/tasks/{task_id}")
+def update_task(
+    task_id:int,
+    payload: schemas.UpdateTask,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    task = db.query(models.Task).filter(
+        models.Task.id == task_id,
+    ).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    task.status = payload.status
+
+    db.commit()
+    db.refresh(task)
+
+    return {
+        "message": "Task Updated",
+        "status": task.status
+    }

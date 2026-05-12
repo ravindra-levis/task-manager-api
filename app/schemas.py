@@ -23,9 +23,6 @@ class TaskCreate(BaseModel):
     description: str
     project_id: int
     assigned_user_id: int | None = None
-       
-class UpdateTask(BaseModel):
-    status: str
 
 class UpdateTask(BaseModel):
     status: TaskStatus
