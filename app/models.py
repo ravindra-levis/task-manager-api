@@ -4,9 +4,9 @@ from .database import Base
 import enum
 
 class TaskStatus(str, enum.Enum):
-    todo = "TODO"
-    in_progress = "IN_PROGRESS"
-    done = "DONE"
+    TODO = "TODO"
+    IN_PROGRESS = "IN_PROGRESS"
+    DONE = "DONE"
     
 class UserRole(str, enum.Enum):
     admin = "ADMIN"
@@ -51,7 +51,7 @@ class Task(Base):
     title = Column(String)
     description = Column(String)
 
-    status = Column(Enum(TaskStatus), default=TaskStatus.todo)
+    status = Column(Enum(TaskStatus), default=TaskStatus.TODO)
 
     project_id = Column(Integer, ForeignKey("projects.id"))
     assigned_user_id = Column(Integer, ForeignKey("users.id"))
