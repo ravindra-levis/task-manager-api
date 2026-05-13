@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from enum import Enum
+from typing import Optional
 
 class TaskStatus(str, Enum):
     TODO = "TODO"
@@ -32,6 +33,18 @@ class TaskResponse(BaseModel):
     title: str
     description: str
     status: TaskStatus
+
+    class Config:
+        from_attributes = True
+
+
+class TaskOut(BaseModel):
+    id: int
+    title: str
+    description: Optional[str]
+    status: TaskStatus
+    project_id: int
+    assigned_user_id: Optional[int]
 
     class Config:
         from_attributes = True
