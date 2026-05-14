@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import User
+from app import schemas
 
 from app.security import (
     hash_password,
@@ -20,8 +21,8 @@ router = APIRouter(
 # ======================= REGISTER ========================
 
 @router.post("/register")
-def register(name: str, email: str, password: str, db: Session = Depends(get_db)):
-    existing_user = db.query(User).filter(User.email == email).first()
+def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    existing_user = db.query(User).filter(User.email == user.email).first()
 
     if existing_user:
         raise HTTPException(
@@ -29,11 +30,11 @@ def register(name: str, email: str, password: str, db: Session = Depends(get_db)
             detail="Email already registered"
         )
 
-    hashed_password = hash_password(password)
+    hashed_password = hash_password(user.password)
 
     user = User(
-        name=name,
-        email=email,
+        name=user.name,
+        email=user.email,
         hashed_password=hashed_password
     )
 
